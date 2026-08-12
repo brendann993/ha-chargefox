@@ -14,6 +14,17 @@ from .entity import ChargefoxConnectorEntity, ChargefoxStationEntity
 
 PARALLEL_UPDATES = 0
 
+_PLUG_ICONS = {
+    "ccs 1": "mdi:ev-plug-ccs1",
+    "ccs 2": "mdi:ev-plug-ccs2",
+    "chademo": "mdi:ev-plug-chademo",
+    "type 1": "mdi:ev-plug-type1",
+    "type 1 (sae j1772)": "mdi:ev-plug-type1",
+    "type 2": "mdi:ev-plug-type2",
+    "type 2 (mennekes)": "mdi:ev-plug-type2",
+}
+_DEFAULT_PLUG_ICON = "mdi:ev-station"
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -191,6 +202,13 @@ class ChargefoxConnectorStatusSensor(ChargefoxConnectorEntity, SensorEntity):
     def native_value(self) -> str | None:
         """Return connector status."""
         return self.connector.status if self.connector else None
+
+    @property
+    def icon(self) -> str:
+        """Return the icon for the connector's plug type."""
+        if not (connector := self.connector) or not connector.plug:
+            return _DEFAULT_PLUG_ICON
+        return _PLUG_ICONS.get(connector.plug.short_name.casefold(), _DEFAULT_PLUG_ICON)
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
