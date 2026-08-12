@@ -10,6 +10,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_LATITUDE, CONF_LONGITUDE, CONF_RADIUS
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util.location import distance
 
@@ -74,6 +75,21 @@ class ChargefoxDataUpdateCoordinator(DataUpdateCoordinator[dict[str, ChargeStati
             update_interval=UPDATE_INTERVAL,
         )
         self.client = client
+        self._station_ids: set[str] | None = None
+
+    def _enabled_station_ids(self) -> list[str]:
+        """Return known station IDs whose Home Assistant devices are enabled."""
+        if self._station_ids is None:
+            return []
+
+        device_registry = dr.async_get(self.hass)
+        return [
+            station_id
+            for station_id in self._station_ids
+            if (device := device_registry.async_get_device({(DOMAIN, station_id)}))
+            is None
+            or device.disabled_by is None
+        ]
 
     async def _async_update_data(self) -> dict[str, ChargeStation]:
         """Fetch station and connector states."""
@@ -88,10 +104,15 @@ class ChargefoxDataUpdateCoordinator(DataUpdateCoordinator[dict[str, ChargeStati
         )
 
         try:
-            stations = await self.client.get_charge_stations_by_bounds(
-                bounds_from_circle(latitude, longitude, radius),
-                LocationFilter(plug_ids=plug_ids or None),
-            )
+            if self._station_ids is None:
+                stations = await self.client.get_charge_stations_by_bounds(
+                    bounds_from_circle(latitude, longitude, radius),
+                    LocationFilter(plug_ids=plug_ids or None),
+                )
+            else:
+                stations = await self.client.get_charge_stations(
+                    self._enabled_station_ids()
+                )
         except ChargefoxHTTPError as err:
             if err.status_code in (401, 403):
                 raise ConfigEntryAuthFailed from err
@@ -100,7 +121,7 @@ class ChargefoxDataUpdateCoordinator(DataUpdateCoordinator[dict[str, ChargeStati
             raise UpdateFailed(f"Error communicating with Chargefox: {err}") from err
 
         canonical_plug_ids = {_canonical_global_id(plug_id) for plug_id in plug_ids}
-        return {
+        filtered_stations = {
             station.id: station
             for station in stations
             if station.location is not None
@@ -122,3 +143,6 @@ class ChargefoxDataUpdateCoordinator(DataUpdateCoordinator[dict[str, ChargeStati
                 )
             )
         }
+        if self._station_ids is None:
+            self._station_ids = set(filtered_stations)
+        return filtered_stations

@@ -13,7 +13,7 @@
         "chargefox"
     ],
     "requirements": [
-        "pychargefox==0.1.4"
+        "pychargefox==0.1.5"
     ],
     "version": "0.1.3"
 }
