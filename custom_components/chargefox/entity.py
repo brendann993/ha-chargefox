@@ -23,6 +23,17 @@ def _station_device_name(station: ChargeStation | None) -> str:
     return f"{location_name} ({station_name})"
 
 
+def _station_device_info(station_id: str, station: ChargeStation | None) -> DeviceInfo:
+    """Return device information shared by all station entities."""
+    return DeviceInfo(
+        identifiers={(DOMAIN, station_id)},
+        name=_station_device_name(station),
+        manufacturer=(station.vendor if station else None) or "Chargefox",
+        model=station.model if station else None,
+        serial_number=station.charge_box_identity if station else None,
+    )
+
+
 class ChargefoxStationEntity(CoordinatorEntity[ChargefoxDataUpdateCoordinator]):
     """Base class for a Chargefox station entity."""
 
@@ -48,14 +59,7 @@ class ChargefoxStationEntity(CoordinatorEntity[ChargefoxDataUpdateCoordinator]):
     @property
     def device_info(self) -> DeviceInfo:
         """Return station device information."""
-        station = self.station
-        return DeviceInfo(
-            identifiers={(DOMAIN, self.station_id)},
-            name=_station_device_name(station),
-            manufacturer=(station.vendor if station else None) or "Chargefox",
-            model=station.model if station else None,
-            serial_number=station.charge_box_identity if station else None,
-        )
+        return _station_device_info(self.station_id, self.station)
 
 
 class ChargefoxConnectorEntity(ChargefoxStationEntity):

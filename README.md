@@ -16,6 +16,8 @@ limit the results to stations that support selected plug types.
 - Configure a station search area using a map and radius.
 - Optionally filter stations by one or more plug types.
 - Automatically discover stations and connectors within the configured area.
+- Display discovered stations as markers on Home Assistant map cards.
+- Summarise online stations and available or faulted connectors for the area.
 - Monitor station availability, status, maximum power, pricing and other details.
 - Monitor connector status and active charging-session information when available.
 - Change the search area and plug filters from the integration options.
@@ -80,6 +82,24 @@ available entities depend on the information returned by Chargefox and include:
 - **Firmware** - the station's reported firmware version.
 - **Connector status** - the state and plug type of each connector, with active
   charging-session details when available.
+
+The configured search area is also represented as a summary device with counts
+for online stations, available connectors and faulted connectors, plus the time
+of the most recent station discovery.
+
+### Station map
+
+Each station also creates a `geo_location` entity containing its fixed
+coordinates. To display every discovered Chargefox station on one map, add a map
+card using the Chargefox geolocation source:
+
+```yaml
+type: map
+geo_location_sources:
+  - chargefox
+auto_fit: true
+cluster: true
+```
 
 Known station and connector data is refreshed every two minutes. The configured
 area is searched again every six hours so that newly added stations are

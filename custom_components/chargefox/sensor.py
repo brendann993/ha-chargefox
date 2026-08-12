@@ -2,14 +2,19 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
 from homeassistant.const import EntityCategory, UnitOfPower
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import ChargefoxConfigEntry
+from .const import DOMAIN
+from .coordinator import ChargefoxDataUpdateCoordinator
 from .entity import ChargefoxConnectorEntity, ChargefoxStationEntity
 
 PARALLEL_UPDATES = 0
@@ -35,6 +40,15 @@ async def async_setup_entry(
     coordinator = entry.runtime_data
     known_stations: set[str] = set()
     known_connectors: set[tuple[str, str]] = set()
+
+    async_add_entities(
+        (
+            ChargefoxAreaOnlineStationsSensor(coordinator),
+            ChargefoxAreaAvailableConnectorsSensor(coordinator),
+            ChargefoxAreaFaultedConnectorsSensor(coordinator),
+            ChargefoxAreaLastDiscoverySensor(coordinator),
+        )
+    )
 
     @callback
     def async_discover_entities() -> None:
@@ -65,6 +79,121 @@ async def async_setup_entry(
 
     entry.async_on_unload(coordinator.async_add_listener(async_discover_entities))
     async_discover_entities()
+
+
+class ChargefoxAreaEntity(
+    CoordinatorEntity[ChargefoxDataUpdateCoordinator], SensorEntity
+):
+    """Base entity summarising a configured Chargefox area."""
+
+    _attr_has_entity_name = True
+
+    def __init__(self, coordinator: ChargefoxDataUpdateCoordinator) -> None:
+        """Initialize an area summary entity."""
+        super().__init__(coordinator)
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, f"area_{coordinator.config_entry.entry_id}")},
+            name=coordinator.config_entry.title,
+            manufacturer="Chargefox",
+            model="Station search area",
+        )
+
+
+class ChargefoxAreaOnlineStationsSensor(ChargefoxAreaEntity):
+    """Number of online stations in the configured area."""
+
+    _attr_translation_key = "area_online_stations"
+    _attr_icon = "mdi:ev-station"
+
+    def __init__(self, coordinator: ChargefoxDataUpdateCoordinator) -> None:
+        """Initialize the sensor."""
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{coordinator.config_entry.entry_id}_online_stations"
+
+    @property
+    def native_value(self) -> int:
+        """Return the number of online stations."""
+        return sum(station.online is True for station in self.coordinator.data.values())
+
+    @property
+    def extra_state_attributes(self) -> dict[str, int]:
+        """Return station totals for context."""
+        stations = self.coordinator.data.values()
+        return {
+            "total_stations": len(self.coordinator.data),
+            "offline_stations": sum(station.online is False for station in stations),
+        }
+
+
+class ChargefoxAreaAvailableConnectorsSensor(ChargefoxAreaEntity):
+    """Number of available connectors in the configured area."""
+
+    _attr_translation_key = "area_available_connectors"
+    _attr_icon = "mdi:ev-plug-type2"
+
+    def __init__(self, coordinator: ChargefoxDataUpdateCoordinator) -> None:
+        """Initialize the sensor."""
+        super().__init__(coordinator)
+        self._attr_unique_id = (
+            f"{coordinator.config_entry.entry_id}_available_connectors"
+        )
+
+    @property
+    def native_value(self) -> int:
+        """Return the number of available connectors."""
+        return sum(
+            connector.available is True
+            for station in self.coordinator.data.values()
+            for connector in station.connectors
+        )
+
+    @property
+    def extra_state_attributes(self) -> dict[str, int]:
+        """Return the total connector count for context."""
+        return {
+            "total_connectors": sum(
+                len(station.connectors) for station in self.coordinator.data.values()
+            )
+        }
+
+
+class ChargefoxAreaFaultedConnectorsSensor(ChargefoxAreaEntity):
+    """Number of faulted connectors in the configured area."""
+
+    _attr_translation_key = "area_faulted_connectors"
+    _attr_icon = "mdi:alert-circle"
+
+    def __init__(self, coordinator: ChargefoxDataUpdateCoordinator) -> None:
+        """Initialize the sensor."""
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{coordinator.config_entry.entry_id}_faulted_connectors"
+
+    @property
+    def native_value(self) -> int:
+        """Return the number of faulted connectors."""
+        return sum(
+            bool(connector.status and "fault" in connector.status.casefold())
+            for station in self.coordinator.data.values()
+            for connector in station.connectors
+        )
+
+
+class ChargefoxAreaLastDiscoverySensor(ChargefoxAreaEntity):
+    """Time when the configured area was last searched for stations."""
+
+    _attr_translation_key = "area_last_discovery"
+    _attr_device_class = SensorDeviceClass.TIMESTAMP
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    def __init__(self, coordinator: ChargefoxDataUpdateCoordinator) -> None:
+        """Initialize the sensor."""
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{coordinator.config_entry.entry_id}_last_discovery"
+
+    @property
+    def native_value(self) -> datetime | None:
+        """Return the last successful rediscovery time."""
+        return self.coordinator.last_discovery
 
 
 class ChargefoxStationStatusSensor(ChargefoxStationEntity, SensorEntity):

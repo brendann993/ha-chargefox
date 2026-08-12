@@ -49,6 +49,31 @@
             }
         },
         "sensor": {
+            "area_available_connectors": {
+                "name": "Available connectors",
+                "state_attributes": {
+                    "total_connectors": {
+                        "name": "Total connectors"
+                    }
+                }
+            },
+            "area_faulted_connectors": {
+                "name": "Faulted connectors"
+            },
+            "area_last_discovery": {
+                "name": "Last station discovery"
+            },
+            "area_online_stations": {
+                "name": "Online stations",
+                "state_attributes": {
+                    "offline_stations": {
+                        "name": "Offline stations"
+                    },
+                    "total_stations": {
+                        "name": "Total stations"
+                    }
+                }
+            },
             "connector_status": {
                 "name": "{connector} status",
                 "state_attributes": {

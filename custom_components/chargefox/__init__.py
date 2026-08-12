@@ -12,7 +12,7 @@ from chargefox import ChargefoxClient
 from .const import DOMAIN
 from .coordinator import ChargefoxDataUpdateCoordinator
 
-PLATFORMS = (Platform.BINARY_SENSOR, Platform.SENSOR)
+PLATFORMS = (Platform.BINARY_SENSOR, Platform.GEO_LOCATION, Platform.SENSOR)
 
 type ChargefoxConfigEntry = ConfigEntry[ChargefoxDataUpdateCoordinator]
 
