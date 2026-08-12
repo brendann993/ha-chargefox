@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import base64
 import binascii
 import math
@@ -26,7 +25,6 @@ from chargefox import (
 from .const import CONF_LOCATION, CONF_PLUG_IDS, DOMAIN, LOGGER, UPDATE_INTERVAL
 
 _METERS_PER_DEGREE = 111_320
-_MAX_CONCURRENT_REQUESTS = 5
 
 
 def _canonical_global_id(value: str) -> str:
@@ -90,27 +88,9 @@ class ChargefoxDataUpdateCoordinator(DataUpdateCoordinator[dict[str, ChargeStati
         )
 
         try:
-            bounds = bounds_from_circle(latitude, longitude, radius)
-            location_filter = LocationFilter(plug_ids=plug_ids or None)
-            summaries = await self.client.get_locations_by_bounds(
-                bounds,
-                location_filter,
-            )
-            location_ids = [
-                summary.id
-                for summary in summaries
-                if distance(latitude, longitude, summary.latitude, summary.longitude)
-                <= radius
-            ]
-            semaphore = asyncio.Semaphore(_MAX_CONCURRENT_REQUESTS)
-
-            async def async_get_location(location_id: str):
-                async with semaphore:
-                    return await self.client.get_location(location_id)
-
-            results = await asyncio.gather(
-                *(async_get_location(location_id) for location_id in location_ids),
-                return_exceptions=True,
+            stations = await self.client.get_charge_stations_by_bounds(
+                bounds_from_circle(latitude, longitude, radius),
+                LocationFilter(plug_ids=plug_ids or None),
             )
         except ChargefoxHTTPError as err:
             if err.status_code in (401, 403):
@@ -119,40 +99,26 @@ class ChargefoxDataUpdateCoordinator(DataUpdateCoordinator[dict[str, ChargeStati
         except ChargefoxError as err:
             raise UpdateFailed(f"Error communicating with Chargefox: {err}") from err
 
-        stations: dict[str, ChargeStation] = {}
-        failures: list[ChargefoxError] = []
         canonical_plug_ids = {_canonical_global_id(plug_id) for plug_id in plug_ids}
-        for result in results:
-            if isinstance(result, ChargefoxHTTPError) and result.status_code in (
-                401,
-                403,
-            ):
-                raise ConfigEntryAuthFailed from result
-            if isinstance(result, ChargefoxError):
-                failures.append(result)
-                continue
-            if isinstance(result, BaseException):
-                raise result
-
-            for station in result.charge_stations:
-                if plug_ids and not any(
+        return {
+            station.id: station
+            for station in stations
+            if station.location is not None
+            and station.location.latitude is not None
+            and station.location.longitude is not None
+            and distance(
+                latitude,
+                longitude,
+                station.location.latitude,
+                station.location.longitude,
+            )
+            <= radius
+            and (
+                not plug_ids
+                or any(
                     connector.plug is not None
                     and _canonical_global_id(connector.plug.id) in canonical_plug_ids
                     for connector in station.connectors
-                ):
-                    continue
-                station.location = result
-                stations[station.id] = station
-
-        if failures and not stations:
-            raise UpdateFailed(
-                f"Error communicating with Chargefox: {failures[0]}"
-            ) from failures[0]
-        if failures:
-            LOGGER.warning(
-                "Unable to update %s of %s Chargefox locations",
-                len(failures),
-                len(results),
+                )
             )
-
-        return stations
+        }

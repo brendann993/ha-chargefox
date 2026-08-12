@@ -34,3 +34,5 @@ home-assistant_v2.db*
 *.swp
 .DS_Store
 Thumbs.db
+
+docs/
