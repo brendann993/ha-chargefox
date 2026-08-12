@@ -55,11 +55,13 @@ def test_area_summary_values(hass) -> None:
     available = ChargefoxAreaAvailableConnectorsSensor(coordinator)
 
     assert online.native_value == 1
+    assert online.name == "Online stations"
     assert online.extra_state_attributes == {
         "total_stations": 2,
         "offline_stations": 1,
     }
     assert available.native_value == 1
+    assert available.name == "Available connectors"
     assert available.extra_state_attributes == {"total_connectors": 2}
     assert ChargefoxAreaFaultedConnectorsSensor(coordinator).native_value == 1
     assert ChargefoxAreaLastDiscoverySensor(coordinator).native_value == DISCOVERY_TIME

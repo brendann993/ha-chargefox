@@ -102,6 +102,7 @@ class ChargefoxAreaEntity(
 class ChargefoxAreaOnlineStationsSensor(ChargefoxAreaEntity):
     """Number of online stations in the configured area."""
 
+    _attr_name = "Online stations"
     _attr_translation_key = "area_online_stations"
     _attr_icon = "mdi:ev-station"
 
@@ -128,6 +129,7 @@ class ChargefoxAreaOnlineStationsSensor(ChargefoxAreaEntity):
 class ChargefoxAreaAvailableConnectorsSensor(ChargefoxAreaEntity):
     """Number of available connectors in the configured area."""
 
+    _attr_name = "Available connectors"
     _attr_translation_key = "area_available_connectors"
     _attr_icon = "mdi:ev-plug-type2"
 
@@ -160,6 +162,7 @@ class ChargefoxAreaAvailableConnectorsSensor(ChargefoxAreaEntity):
 class ChargefoxAreaFaultedConnectorsSensor(ChargefoxAreaEntity):
     """Number of faulted connectors in the configured area."""
 
+    _attr_name = "Faulted connectors"
     _attr_translation_key = "area_faulted_connectors"
     _attr_icon = "mdi:alert-circle"
 
@@ -181,6 +184,7 @@ class ChargefoxAreaFaultedConnectorsSensor(ChargefoxAreaEntity):
 class ChargefoxAreaLastDiscoverySensor(ChargefoxAreaEntity):
     """Time when the configured area was last searched for stations."""
 
+    _attr_name = "Last station discovery"
     _attr_translation_key = "area_last_discovery"
     _attr_device_class = SensorDeviceClass.TIMESTAMP
     _attr_entity_category = EntityCategory.DIAGNOSTIC
