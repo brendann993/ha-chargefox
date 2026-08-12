@@ -1,0 +1,144 @@
+{
+    "config": {
+        "abort": {
+            "already_configured": "This Chargefox search area is already configured"
+        },
+        "error": {
+            "cannot_connect": "Failed to connect",
+            "invalid_auth": "Invalid authentication",
+            "no_matching_stations": "No stations match the selected plug types inside this area",
+            "no_stations": "No Chargefox stations were found inside the selected area",
+            "unknown": "Unexpected error"
+        },
+        "step": {
+            "reauth_confirm": {
+                "data": {
+                    "access_token": "Bearer token"
+                },
+                "data_description": {
+                    "access_token": "The bearer token from the Chargefox app"
+                },
+                "description": "Enter a new Chargefox bearer token"
+            },
+            "user": {
+                "data": {
+                    "name": "Area name",
+                    "location": "Station search area"
+                },
+                "data_description": {
+                    "name": "A friendly name such as Northern suburbs",
+                    "location": "Choose the center point and radius on the map"
+                },
+                "description": "Name the area and select the radius to monitor."
+            },
+            "plugs": {
+                "data": {
+                    "plug_ids": "Plug types"
+                },
+                "data_description": {
+                    "plug_ids": "Optional. Leave empty to include every plug type."
+                },
+                "description": "Select the plug types to include in this area."
+            }
+        }
+    },
+    "entity": {
+        "binary_sensor": {
+            "station_online": {
+                "name": "Online"
+            }
+        },
+        "sensor": {
+            "connector_status": {
+                "name": "{connector} status",
+                "state_attributes": {
+                    "active_session": {
+                        "name": "Active charging session"
+                    },
+                    "available": {
+                        "name": "Available"
+                    },
+                    "charge_rate_kw": {
+                        "name": "Charge rate (kW)"
+                    },
+                    "plug_id": {
+                        "name": "Plug ID"
+                    },
+                    "plug_type": {
+                        "name": "Plug type"
+                    },
+                    "preparing": {
+                        "name": "Preparing"
+                    },
+                    "session_id": {
+                        "name": "Session ID"
+                    },
+                    "session_start_time": {
+                        "name": "Session start time"
+                    },
+                    "session_state": {
+                        "name": "Session state"
+                    },
+                    "start_meter_value": {
+                        "name": "Start meter value"
+                    },
+                    "state_of_charge": {
+                        "name": "State of charge"
+                    },
+                    "total_consumption_wh": {
+                        "name": "Total consumption (Wh)"
+                    }
+                }
+            },
+            "station_directions": {
+                "name": "Directions"
+            },
+            "station_firmware": {
+                "name": "Firmware"
+            },
+            "station_power": {
+                "name": "Maximum power"
+            },
+            "station_pricing": {
+                "name": "Pricing",
+                "state_attributes": {
+                    "idle_fee_amount": {
+                        "name": "Idle fee amount"
+                    },
+                    "idle_fee_currency": {
+                        "name": "Idle fee currency"
+                    },
+                    "idle_fee_grace_period": {
+                        "name": "Idle fee grace period"
+                    },
+                    "idle_fee_per_minute": {
+                        "name": "Idle fee per minute"
+                    },
+                    "tariffs": {
+                        "name": "Tariffs"
+                    }
+                }
+            },
+            "station_status": {
+                "name": "Status"
+            }
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "data": {
+                    "location": "Station search area",
+                    "name": "Area name",
+                    "plug_ids": "Plug types"
+                },
+                "data_description": {
+                    "location": "Choose the center point and radius on the map",
+                    "name": "A friendly name such as Northern suburbs",
+                    "plug_ids": "Optional. Leave empty to include every plug type."
+                },
+                "description": "Move the map marker or change the radius to update the monitored area."
+            }
+        }
+    }
+}
