@@ -81,8 +81,17 @@ available entities depend on the information returned by Chargefox and include:
 - **Connector status** - the state and plug type of each connector, with active
   charging-session details when available.
 
-Station data is refreshed every two minutes. New stations and connectors found
-inside the configured area are added automatically.
+Known station and connector data is refreshed every two minutes. The configured
+area is searched again every six hours so that newly added stations are
+discovered automatically. Stations disabled in Home Assistant are excluded from
+the regular status queries until they are re-enabled.
+
+## Diagnostics
+
+From the integration page, select the three-dot menu and **Download diagnostics**
+to collect useful troubleshooting information. Access tokens and the configured
+location boundary are redacted automatically. Review the file before sharing it,
+as you would with any diagnostic output.
 
 ## Known limitations
 

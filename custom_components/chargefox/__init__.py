@@ -1,11 +1,13 @@
 """The Chargefox integration."""
 
-from chargefox import ChargefoxClient
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_ACCESS_TOKEN, Platform
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import device_registry as dr, entity_registry as er
+from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+
+from chargefox import ChargefoxClient
 
 from .const import DOMAIN
 from .coordinator import ChargefoxDataUpdateCoordinator
